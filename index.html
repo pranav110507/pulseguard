@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PulseGuard — First 10 Minutes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* VOICE: urgent but kind — a calm trainer standing beside you in an emergency.
+   IDEA: a bedside patient monitor — live ECG trace, clock, vitals readouts.
+   PICTURE: full-width ECG monitor in the hero; a working heart diagram; a CPR pad you press.
+   COLOUR and TYPE: cardiac red, monitor black with ECG green, white ground; Archivo + Inter.
+   LAYOUT: monitor band → emergency card → scenarios → CPR trainer → heart lab → risk check → AI bot. */
+:root{color-scheme:light dark;
+--bg:light-dark(#ffffff,#130b0d);--ink:light-dark(#1a1012,#f6eeef);--soft:light-dark(#6b5a5d,#bfaeb1);
+--red:#c8102e;--red2:light-dark(#fbe7ea,#2a1216);--line:light-dark(#ecdfe1,#33222a);
+--card:light-dark(#fff,#1b1114);--mon:#0c1210;--ecg:#2ee68a;--blue:#2f6fde;--amber:#f2a23a}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Inter,system-ui,sans-serif;overflow-x:clip}
+h1,h2,h3{font-family:Archivo,Inter,sans-serif;line-height:1.05;text-wrap:balance;margin:0}
+h2{font-size:clamp(28px,4vw,42px);font-weight:800}
+h3{font-size:20px;font-weight:600}
+p{margin:.5em 0}
+.band{padding:clamp(28px,4vw,64px) max(5vw,16px)}
+.wrap{max-width:1240px;margin:0 auto}
+.lede{color:var(--soft);max-width:62ch;margin-top:10px}
+html{scroll-padding-top:72px;scroll-behavior:smooth}
+button{font:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,a:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+/* nav */
+nav{position:sticky;top:0;z-index:20;background:var(--mon);color:#e9f5ee;border-bottom:1px solid #1f2b26}
+nav .wrap{display:flex;align-items:center;gap:18px;padding:10px max(5vw,16px);flex-wrap:wrap}
+.logo{font:800 19px Archivo,sans-serif;display:flex;align-items:center;gap:8px;color:#fff;text-decoration:none}
+.logo svg{width:26px;height:26px}
+.links{display:flex;gap:4px;overflow-x:auto;margin-left:auto}
+.links a{color:#cfe3d8;text-decoration:none;padding:8px 10px;border-radius:8px;font-size:14px;white-space:nowrap}
+.links a:hover{background:#18231f;color:#fff}
+/* hero monitor */
+.hero{background:var(--mon);color:#e9f5ee;padding-bottom:0}
+.hero h1{font-size:clamp(36px,6vw,64px);font-weight:800;max-width:15ch}
+.hero h1 em{font-style:normal;color:var(--ecg)}
+.hero .lede{color:#a9c2b5}
+.monitor{margin-top:28px;border-top:1px solid #1f2b26;display:grid;grid-template-columns:minmax(0,1fr) 220px;min-height:260px}
+.trace{position:relative;min-height:240px}
+.trace canvas{position:absolute;inset:0;width:100%;height:100%}
+.vitals{border-left:1px solid #1f2b26;padding:18px;display:grid;gap:14px;align-content:center}
+.vital small{display:block;color:#7fa391;font-size:13px}
+.vital b{font:800 44px Archivo,sans-serif;color:var(--ecg);line-height:1}
+.vital.r b{color:#ff5a6e}
+.vital.w b{color:#fff;font-size:30px}
+.heroBtns{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+.btn{border:0;border-radius:12px;padding:13px 20px;min-height:46px;font-weight:600;background:var(--red);color:#fff;text-decoration:none;display:inline-flex;align-items:center;gap:8px}
+.btn.ghost{background:transparent;border:1.5px solid currentColor;color:inherit}
+.btn:hover{filter:brightness(1.08)}
+/* emergency card */
+.sos{background:var(--red);color:#fff}
+.sos .wrap{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,2fr);gap:28px;align-items:center}
+.nums{display:flex;gap:14px;flex-wrap:wrap}
+.num{background:#fff;color:var(--red);border-radius:14px;padding:10px 18px}
+.num b{font:800 40px Archivo,sans-serif;display:block;line-height:1}
+.num span{font-size:13px;font-weight:600;color:#5b0a1a}
+.steps3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.s3{border:1.5px solid #ffffff66;border-radius:14px;padding:14px}
+.s3 b{font:800 22px Archivo,sans-serif;display:block}
+.s3 p{font-size:14px;margin:4px 0 0;color:#ffe6ea}
+/* scenarios */
+.scen-pick{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:22px}
+.pick{text-align:left;border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:16px;padding:16px;min-height:132px;display:flex;flex-direction:column;gap:6px;transition:border-color .2s,transform .2s}
+.pick:hover{border-color:var(--red);transform:translateY(-2px)}
+.pick[aria-pressed=true]{border-color:var(--red);background:var(--red2)}
+.pick .tag{font-size:12px;font-weight:600;color:var(--red)}
+.pick b{font:600 18px Archivo,sans-serif}
+.pick span{font-size:14px;color:var(--soft)}
+.pick .done{margin-top:auto;font-size:12px;color:#1c9a5c;font-weight:600}
+.stage{margin-top:18px;display:grid;grid-template-columns:minmax(0,1fr) 280px;border:1.5px solid var(--line);border-radius:20px;overflow:hidden;background:var(--card)}
+.play{padding:clamp(18px,3vw,32px)}
+.scene{display:flex;gap:14px;align-items:flex-start}
+.scene svg{flex:none;width:64px;height:64px}
+.scene p{font-size:18px;margin:0}
+.stepn{font-size:13px;color:var(--soft);margin-bottom:6px}
+.choices{display:grid;gap:10px;margin-top:20px}
+.choice{text-align:left;border:1.5px solid var(--line);background:transparent;color:var(--ink);border-radius:14px;padding:14px 16px;min-height:52px;font-size:16px;display:flex;gap:12px;align-items:center}
+.choice:hover:not(:disabled){border-color:var(--ink)}
+.choice .k{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--red2);color:var(--red);font-weight:700;font-size:14px}
+.choice.good{border-color:#1c9a5c;background:light-dark(#e8f7ef,#10261b)}
+.choice.bad{border-color:var(--red);background:var(--red2)}
+.choice.meh{border-color:var(--amber);background:light-dark(#fff4e4,#2a1f10)}
+.choice:disabled{cursor:default;opacity:.95}
+.fb{margin-top:16px;border-radius:14px;padding:14px 16px;background:light-dark(#f6f1f2,#22171a);display:none}
+.fb.show{display:block;animation:pop .3s ease}
+.fb b{display:block;margin-bottom:4px}
+.fbBtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.mini{border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:9px 14px;min-height:44px;font-size:14px;font-weight:600}
+.mini.p{background:var(--red);border-color:var(--red);color:#fff}
+.side{background:var(--mon);color:#e9f5ee;padding:22px;display:grid;gap:18px;align-content:start}
+.side small{color:#7fa391;font-size:13px;display:block}
+.clock{font:800 46px Archivo,sans-serif;color:#fff;line-height:1}
+.meter{height:14px;border-radius:8px;background:#1d2a25;overflow:hidden;margin-top:6px}
+.meter i{display:block;height:100%;background:var(--ecg);transition:width .6s ease,background .6s}
+.mval{font:800 30px Archivo,sans-serif;color:var(--ecg)}
+.hist{display:grid;gap:6px;font-size:13px;color:#b5cbbf}
+.hist div{display:flex;gap:8px}
+.dot{flex:none;width:10px;height:10px;border-radius:50%;margin-top:5px}
+.end h3{font-size:28px;margin-bottom:8px}
+@keyframes pop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+/* CPR */
+.cpr{background:var(--mon);color:#e9f5ee}
+.cpr .lede{color:#a9c2b5}
+.cprGrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;margin-top:24px;align-items:center}
+.pad{display:grid;place-items:center;gap:16px}
+.chest{width:min(300px,70vw);aspect-ratio:1;border-radius:50%;border:0;background:radial-gradient(circle at 40% 35%,#ff6b7d,var(--red) 55%,#7a0a1c);color:#fff;font:800 28px Archivo,sans-serif;box-shadow:0 18px 0 #4a0612,0 30px 50px #0008;transition:transform .07s,box-shadow .07s;touch-action:manipulation;user-select:none}
+.chest.down{transform:translateY(14px) scale(.97);box-shadow:0 4px 0 #4a0612,0 10px 20px #0008}
+.chest small{display:block;font:500 14px Inter,sans-serif;opacity:.85}
+.gauge{width:100%;max-width:460px}
+.bpm{font:800 clamp(56px,9vw,96px) Archivo,sans-serif;line-height:1;color:var(--ecg)}
+.bpmL{color:#a9c2b5}
+.cprStats{display:flex;gap:22px;flex-wrap:wrap;margin:14px 0}
+.cprStats div b{font:800 26px Archivo,sans-serif;display:block;color:#fff}
+.cprStats small{color:#7fa391}
+.cprTip{font-size:18px;min-height:56px;color:#fff}
+.cprBtns{display:flex;gap:10px;flex-wrap:wrap}
+.cprBtns .mini{background:#16211d;border-color:#2a3a33;color:#e9f5ee}
+.cprBtns .mini[aria-pressed=true]{background:var(--ecg);color:#06130c;border-color:var(--ecg)}
+/* heart lab (simple) */
+.lab{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:28px;margin-top:22px;align-items:start}
+.heartFig{background:var(--card);border:1.5px solid var(--line);border-radius:22px;padding:12px}
+.heartFig svg{width:100%;height:auto;display:block}
+#bigHeart{transform-origin:300px 260px;transform-box:view-box}
+#bigHeart.squeeze{animation:squeeze .5s ease}
+@keyframes squeeze{0%,100%{transform:scale(1)}25%{transform:scale(.9)}45%{transform:scale(1.03)}60%{transform:scale(.95)}}
+.room{transition:opacity .3s,stroke-width .3s;cursor:pointer}
+.room.dim{opacity:.35}
+.zone{transition:opacity .3s}.zone.dim{opacity:.3}
+.cards{display:grid;gap:10px}
+.sc{display:flex;gap:14px;text-align:left;border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:16px;padding:14px 16px;align-items:flex-start;transition:border-color .2s,background .2s}
+.sc:hover{border-color:var(--ink)}
+.sc.on{border-color:var(--red);background:var(--red2)}
+.sc .n{flex:none;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font:800 17px Archivo,sans-serif;color:#fff}
+.sc b{display:block;font:600 17px Archivo,sans-serif;margin-bottom:2px}
+.sc span{font-size:15px;color:var(--soft)}
+.labBtns{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:16px}
+.fact{background:var(--red2);border-radius:14px;padding:12px}
+.fact b{font:800 24px Archivo,sans-serif;color:var(--red);display:block;line-height:1.1}
+.fact span{font-size:13px;color:var(--soft)}
+.lub{font:800 22px Archivo,sans-serif;fill:var(--red);opacity:0}
+.lub.show{animation:lub .9s ease}
+@keyframes lub{0%{opacity:0}20%{opacity:1}100%{opacity:0}}
+.hint{font-size:13px;color:var(--soft);margin:8px 6px 2px}
+/* faded background art */
+.deco{position:relative;overflow:hidden}
+.deco>*:not(.bgart){position:relative;z-index:1}
+.bgart{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;color:var(--ink);opacity:.07;z-index:0}
+.bgart.lt{color:#fff;opacity:.07}
+.bgart.wh{color:#fff;opacity:.13}
+.drift{animation:drift 16s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:center}
+.drift2{animation:drift 22s ease-in-out infinite alternate-reverse;transform-box:fill-box;transform-origin:center}
+@keyframes drift{from{transform:translateY(0) rotate(0)}to{transform:translateY(-18px) rotate(4deg)}}
+/* risk */
+.risk{background:var(--red2)}
+.riskGrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;margin-top:22px}
+.form{display:grid;gap:16px;background:var(--card);border-radius:20px;padding:22px}
+.f label{display:flex;justify-content:space-between;font-weight:600;font-size:15px;gap:10px}
+.f label output{color:var(--red);font-weight:700;white-space:nowrap}
+input[type=range]{width:100%;accent-color:var(--red);height:32px}
+.tg{display:flex;gap:8px;flex-wrap:wrap}
+.tg button{border:1.5px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:8px 14px;min-height:44px;font-size:14px;font-weight:600}
+.tg button[aria-pressed=true]{background:var(--red);color:#fff;border-color:var(--red)}
+.result{background:var(--mon);color:#e9f5ee;border-radius:20px;padding:24px;display:grid;gap:14px;align-content:start}
+.rScore{font:800 clamp(48px,7vw,72px) Archivo,sans-serif;line-height:1}
+.rBar{height:16px;border-radius:9px;background:linear-gradient(90deg,#2ee68a,#f2a23a 50%,#ff3b55);position:relative}
+.rBar i{position:absolute;top:-6px;width:4px;height:28px;background:#fff;border-radius:2px;transition:left .5s}
+.tips{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.tips li{background:#16211d;border-radius:12px;padding:10px 14px;font-size:15px}
+.note{font-size:13px;color:var(--soft)}
+.result .note{color:#7fa391}
+/* chat */
+.fab{position:fixed;right:18px;bottom:18px;z-index:40;border:0;border-radius:999px;background:var(--red);color:#fff;padding:12px 18px 12px 12px;display:flex;align-items:center;gap:10px;font-weight:700;box-shadow:0 10px 30px #c8102e66;min-height:52px}
+.fab .av{width:34px;height:34px;border-radius:50%;background:#fff;display:grid;place-items:center}
+.fab .av svg{width:22px;height:22px;animation:beat 1s infinite}
+@keyframes beat{0%,100%{transform:scale(1)}15%{transform:scale(1.22)}30%{transform:scale(1)}45%{transform:scale(1.12)}}
+.chat{position:fixed;right:18px;bottom:84px;z-index:41;width:min(400px,calc(100vw - 24px));height:min(600px,calc(100vh - 110px));background:var(--card);border:1.5px solid var(--line);border-radius:20px;box-shadow:0 20px 60px #0005;display:none;flex-direction:column;overflow:hidden}
+.chat.open{display:flex;animation:pop .25s ease}
+.chHead{background:var(--mon);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px}
+.chHead b{font:800 17px Archivo,sans-serif;display:block}
+.chHead small{color:#7fa391;font-size:12px}
+.chHead button{margin-left:auto;background:#1d2a25;border:0;color:#fff;border-radius:10px;width:40px;height:40px;font-size:20px}
+.msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+.m{max-width:88%;padding:10px 14px;border-radius:16px;font-size:15px;line-height:1.5;overflow-wrap:anywhere}
+.m.u{align-self:flex-end;background:var(--red);color:#fff;border-bottom-right-radius:4px}
+.m.b{align-self:flex-start;background:light-dark(#f4eef0,#26191d);border-bottom-left-radius:4px}
+.m.b ul{margin:6px 0;padding-left:18px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;padding:0 14px 10px}
+.chips button{border:1.5px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:6px 12px;font-size:13px;min-height:36px}
+.chips button:hover{border-color:var(--red);color:var(--red)}
+.chForm{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line)}
+.chForm input{flex:1;font:16px Inter,sans-serif;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--bg);color:var(--ink);min-height:44px}
+.chForm button{border:0;background:var(--red);color:#fff;border-radius:12px;padding:0 16px;font-weight:700;min-height:44px}
+.typing span{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--soft);margin-right:4px;animation:bl 1s infinite}
+.typing span:nth-child(2){animation-delay:.15s}.typing span:nth-child(3){animation-delay:.3s}
+@keyframes bl{0%,100%{opacity:.25}50%{opacity:1}}
+footer{background:var(--mon);color:#a9c2b5;font-size:14px}
+footer .wrap{display:flex;gap:20px;justify-content:space-between;flex-wrap:wrap}
+@media(max-width:960px){.lab{grid-template-columns:minmax(0,1fr)}.scen-pick{grid-template-columns:repeat(2,minmax(0,1fr))}.stage{grid-template-columns:minmax(0,1fr)}.lab,.riskGrid,.cprGrid,.sos .wrap{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){.monitor{grid-template-columns:minmax(0,1fr)}.vitals{border-left:0;border-top:1px solid #1f2b26;grid-template-columns:repeat(3,minmax(0,1fr));padding:14px}.vital b{font-size:30px}.vital.w b{font-size:20px}.steps3{grid-template-columns:minmax(0,1fr)}.scen-pick{grid-template-columns:minmax(0,1fr)}.pick{min-height:0}.links{display:none}.facts{grid-template-columns:minmax(0,1fr)}.fab span.t{display:none}.fab{padding:10px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="sHeart" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M50 90C20 70 8 52 12 36C16 20 36 16 50 32C64 16 84 20 88 36C92 52 80 70 50 90Z"/><path d="M44 26C42 12 50 5 58 9C64 12 66 19 63 26"/><path d="M56 8L60 1M51 7V0M33 24C30 16 34 10 40 10"/><path d="M30 42C40 52 46 64 50 82M70 40C62 50 56 62 52 80"/></symbol>
+<symbol id="sEcg" viewBox="0 0 200 40" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="M0 22H60L66 18L72 22H80L86 4L94 38L100 14L106 22H130L138 16L146 22H200"/></symbol>
+<symbol id="sSteth" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M30 8V38C30 58 70 58 70 38V8"/><path d="M24 8H36M64 8H76"/><path d="M50 54V70C50 88 80 88 80 70V62"/><circle cx="80" cy="55" r="7"/></symbol>
+<symbol id="sAmb" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"><path d="M6 36H62V74H6Z"/><path d="M62 46H80L94 60V74H62"/><path d="M68 50H78L86 60H68Z"/><circle cx="22" cy="78" r="8"/><circle cx="80" cy="78" r="8"/><path d="M34 44V66M23 55H45" stroke-width="4"/><path d="M28 36V28H40V36"/></symbol>
+<symbol id="sCell" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.6"><ellipse cx="50" cy="50" rx="40" ry="30"/><ellipse cx="50" cy="50" rx="18" ry="11"/></symbol>
+<symbol id="sRun" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="62" cy="14" r="8"/><path d="M58 26L46 52L60 70L54 94M46 52L30 66L16 62M56 32L74 42L86 34M56 32L38 36L28 48"/></symbol>
+<symbol id="sPlus" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"><path d="M50 22V78M22 50H78"/></symbol>
+<symbol id="sHands" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 70C20 50 30 40 46 38H70C80 38 84 46 78 52H58"/><path d="M30 60C30 46 40 34 56 30H78C88 30 90 40 82 44"/><path d="M10 84H90"/><path d="M50 84V74"/></symbol>
+<symbol id="sLeaf" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M50 90C50 60 54 40 70 20C88 40 84 70 50 90Z"/><path d="M50 90C46 70 34 56 16 50C14 72 30 86 50 90Z"/><path d="M50 90V40"/></symbol>
+</defs></svg>
+<nav><div class="wrap">
+  <a class="logo" href="#top"><svg viewBox="0 0 32 32"><path d="M16 28S3 20 3 11a6.5 6.5 0 0 1 13-1 6.5 6.5 0 0 1 13 1c0 9-13 17-13 17z" fill="#c8102e"/><path d="M5 16h6l2-4 3 8 2-4h9" fill="none" stroke="#2ee68a" stroke-width="2.2" stroke-linejoin="round"/></svg>PulseGuard</a>
+  <div class="links">
+    <a href="#scenarios">Scenarios</a><a href="#cpr">CPR trainer</a><a href="#lab">Heart lab</a><a href="#risk">Risk check</a>
+  </div>
+</div></nav>
+
+<header class="band hero deco" id="top"><svg class="bgart lt" aria-hidden="true" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice"><use href="#sHeart" x="780" y="-20" width="460" height="460" class="drift"/><use href="#sEcg" x="-40" y="40" width="520" height="520"/><use href="#sCell" x="560" y="40" width="110" height="110" class="drift2"/><use href="#sCell" x="1060" y="420" width="90" height="90" class="drift"/><use href="#sPlus" x="640" y="300" width="70" height="70" class="drift2"/><use href="#sSteth" x="40" y="380" width="180" height="180" class="drift"/></svg><div class="wrap">
+  <h1>When a heart stops, <em>you</em> are the first responder.</h1>
+  <p class="lede">Heart disease is the world's leading cause of death. Many people who collapse could live, but the people standing next to them freeze, mistake a heart attack for "gas", or don't know CPR. PulseGuard trains you for the first 10 minutes, before the ambulance arrives.</p>
+  <div class="heroBtns">
+    <a class="btn" href="#scenarios">Start a scenario</a>
+    <a class="btn ghost" href="#cpr">Practise CPR rhythm</a>
+    <button class="btn ghost" id="heroAsk" type="button">Ask Pulse, the AI coach</button>
+  </div>
+</div>
+<div class="monitor">
+  <div class="trace"><canvas id="ecg" aria-label="Live animated ECG trace"></canvas></div>
+  <div class="vitals">
+    <div class="vital"><small>Heart rate</small><b id="hr">72</b></div>
+    <div class="vital r"><small>Blood pressure</small><b>120<span style="font-size:.5em">/80</span></b></div>
+    <div class="vital w"><small>Pumped since you opened this page</small><b id="litres">0.0 L</b></div>
+  </div>
+</div>
+</header>
+
+<section class="band sos deco" aria-label="Emergency numbers"><svg class="bgart wh" aria-hidden="true" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice"><use href="#sAmb" x="960" y="60" width="320" height="320" class="drift"/><use href="#sPlus" x="40" y="40" width="140" height="140" class="drift2"/><use href="#sEcg" x="300" y="520" width="700" height="700"/></svg><div class="wrap">
+  <div>
+    <h2 style="font-size:28px;margin-bottom:12px">In an emergency in India</h2>
+    <div class="nums">
+      <div class="num"><b>112</b><span>All emergencies</span></div>
+      <div class="num"><b>108</b><span>Ambulance</span></div>
+    </div>
+  </div>
+  <div class="steps3">
+    <div class="s3"><b>1. Call</b><p>Not responding and not breathing normally? Call 112 / 108 and put the phone on speaker.</p></div>
+    <div class="s3"><b>2. Push</b><p>Hard and fast in the centre of the chest: 100–120 a minute, 5–6 cm deep.</p></div>
+    <div class="s3"><b>3. Shock</b><p>Send someone for an AED. Switch it on and do what the voice says.</p></div>
+  </div>
+</div></section>
+
+<section class="band deco" id="scenarios"><svg class="bgart " aria-hidden="true" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice"><use href="#sAmb" x="940" y="-30" width="300" height="300" class="drift"/><use href="#sSteth" x="-30" y="420" width="260" height="260" class="drift2"/><use href="#sHeart" x="520" y="520" width="200" height="200" class="drift"/><use href="#sEcg" x="300" y="10" width="520" height="520"/><use href="#sPlus" x="820" y="560" width="90" height="90" class="drift2"/></svg><div class="wrap">
+  <h2>Live scenarios: every second counts</h2>
+  <p class="lede">Pick a situation. Each choice moves the clock. Bad choices cost time, and time costs heart muscle. After each answer you can ask Pulse to explain more.</p>
+  <div class="scen-pick" id="picks"></div>
+  <div class="stage">
+    <div class="play" id="play" aria-live="polite"></div>
+    <aside class="side">
+      <div><small>Time since it started</small><div class="clock" id="clock">0:00</div></div>
+      <div><small id="mLabel">Chance of survival</small><div class="mval" id="mVal">100%</div><div class="meter"><i id="mBar" style="width:100%"></i></div></div>
+      <div><small>Your decisions</small><div class="hist" id="hist"><div style="color:#7fa391">No decisions yet.</div></div></div>
+    </aside>
+  </div>
+</div></section>
+
+<section class="band cpr deco" id="cpr"><svg class="bgart lt" aria-hidden="true" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice"><use href="#sHands" x="880" y="-10" width="360" height="360" class="drift"/><use href="#sHeart" x="-40" y="420" width="300" height="300" class="drift2"/><use href="#sEcg" x="400" y="600" width="640" height="640"/><use href="#sCell" x="560" y="30" width="100" height="100" class="drift"/></svg><div class="wrap">
+  <h2>CPR rhythm trainer</h2>
+  <p class="lede">Hands-only CPR keeps blood moving to the brain while the heart can't pump on its own. Your compressions do the pumping job of the ventricles. Tap the chest (or press the space bar) and try to stay in the green zone of 100–120 per minute.</p>
+  <div class="cprGrid">
+    <div class="pad">
+      <button class="chest" id="chest" type="button">PUSH<small>tap · click · space</small></button>
+    </div>
+    <div>
+      <div class="bpmL">Compressions per minute</div>
+      <div class="bpm" id="bpm">—</div>
+      <svg class="gauge" viewBox="0 0 460 60" aria-hidden="true">
+        <rect x="0" y="20" width="460" height="18" rx="9" fill="#1d2a25"/>
+        <rect x="184" y="20" width="92" height="18" fill="#2ee68a"/>
+        <text x="184" y="58" fill="#7fa391" font-size="13" text-anchor="middle">100</text>
+        <text x="276" y="58" fill="#7fa391" font-size="13" text-anchor="middle">120</text>
+        <text x="0" y="58" fill="#7fa391" font-size="13">60</text>
+        <text x="460" y="58" fill="#7fa391" font-size="13" text-anchor="end">160</text>
+        <polygon id="needle" points="0,6 -8,-6 8,-6" transform="translate(230,16)" fill="#fff"/>
+      </svg>
+      <div class="cprStats">
+        <div><b id="cCount">0</b><small>Compressions</small></div>
+        <div><b id="cGood">0%</b><small>In the green zone</small></div>
+        <div><b id="cTime">0s</b><small>Time</small></div>
+      </div>
+      <div class="cprTip" id="cprTip">Lock your fingers, keep your arms straight, and push with the heel of your hand. Start tapping when you're ready.</div>
+      <div class="cprBtns">
+        <button class="mini" id="metro" type="button" aria-pressed="false">Metronome at 110</button>
+        <button class="mini" id="cReset" type="button">Reset</button>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section class="band deco" id="lab"><svg class="bgart " aria-hidden="true" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice"><use href="#sCell" x="980" y="-20" width="200" height="200" class="drift"/><use href="#sCell" x="1100" y="160" width="120" height="120" class="drift2"/><use href="#sCell" x="-40" y="480" width="180" height="180" class="drift"/><use href="#sPlus" x="40" y="40" width="90" height="90" class="drift2"/></svg><div class="wrap">
+  <h2>Heart lab: how your heart works, made simple</h2>
+  <p class="lede">Think of your heart as a <b>house with 4 rooms</b> and <b>two jobs</b>. The right side sends tired blood to the lungs to pick up oxygen. The left side sends fresh blood to the whole body. Doors (valves) only open one way, and a tiny built-in spark keeps the beat.</p>
+  <div class="lab">
+    <div class="heartFig">
+      <svg viewBox="0 0 600 470" id="heartSvg" role="img" aria-label="Simple heart with four rooms, blood going to the lungs and to the body">
+        <defs><clipPath id="hclip"><path d="M300 392C176 318 140 246 160 192C180 140 256 136 300 186C344 136 420 140 440 192C460 246 424 318 300 392Z"/></clipPath>
+        <marker id="arB" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="22" markerHeight="22" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#2f6fde"/></marker>
+        <marker id="arR" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="22" markerHeight="22" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#c8102e"/></marker></defs>
+        <g class="zone" id="z-lungs"><rect x="190" y="12" width="220" height="58" rx="29" fill="#fde3e8" stroke="#e8394f" stroke-width="2"/><text x="300" y="38" text-anchor="middle" font-weight="700" font-size="17" fill="#1a1012">Lungs</text><text x="300" y="57" text-anchor="middle" font-size="13" fill="#5b4a4d">blood picks up oxygen</text></g>
+        <g class="zone" id="z-body"><rect x="190" y="404" width="220" height="58" rx="29" fill="#efe7e9" stroke="#8a7a7d" stroke-width="2"/><text x="300" y="430" text-anchor="middle" font-weight="700" font-size="17" fill="#1a1012">Body</text><text x="300" y="449" text-anchor="middle" font-size="13" fill="#5b4a4d">muscles and brain use oxygen</text></g>
+        <path id="pB" class="zone" d="M190 433C70 433 50 300 175 250C120 170 150 41 190 41" fill="none" stroke="#2f6fde" stroke-width="10" stroke-linecap="round" stroke-opacity=".35" marker-end="url(#arB)"/>
+        <path id="pR" class="zone" d="M410 41C450 41 480 170 425 250C550 300 530 433 410 433" fill="none" stroke="#c8102e" stroke-width="10" stroke-linecap="round" stroke-opacity=".35" marker-end="url(#arR)"/>
+        <g id="dots"></g>
+        <g id="bigHeart">
+          <g clip-path="url(#hclip)">
+            <rect x="140" y="130" width="160" height="118" fill="#cfdcf7" class="room" id="r-ra"/>
+            <rect x="140" y="248" width="160" height="160" fill="#a9c0f0" class="room" id="r-rv"/>
+            <rect x="300" y="130" width="160" height="118" fill="#f9d0d6" class="room" id="r-la"/>
+            <rect x="300" y="248" width="160" height="160" fill="#f2a0ad" class="room" id="r-lv"/>
+          </g>
+          <path d="M300 392C176 318 140 246 160 192C180 140 256 136 300 186C344 136 420 140 440 192C460 246 424 318 300 392Z" fill="none" stroke="#7a0a1c" stroke-width="4"/>
+          <path d="M300 186V392" stroke="#7a0a1c" stroke-width="5"/>
+          <g class="zone" id="z-valves"><path d="M200 248H262M338 248H400" stroke="#fff" stroke-width="8" stroke-linecap="round"/><path d="M200 248H262M338 248H400" stroke="#7a0a1c" stroke-width="2" stroke-dasharray="4 5"/></g>
+          <g font-weight="700" fill="#1a1012" text-anchor="middle" pointer-events="none">
+            <text x="228" y="210" font-size="15">Right</text><text x="228" y="228" font-size="12">collects</text>
+            <text x="372" y="210" font-size="15">Left</text><text x="372" y="228" font-size="12">collects</text>
+            <text x="240" y="290" font-size="15">Right</text><text x="248" y="308" font-size="11">pumps to lungs</text>
+            <text x="360" y="290" font-size="15">Left</text><text x="352" y="308" font-size="11">pumps to body</text>
+          </g>
+          <g class="zone" id="z-spark"><circle cx="205" cy="182" r="9" fill="#ffd400" stroke="#7a0a1c" stroke-width="2"/><circle id="spark" cx="205" cy="182" r="7" fill="#ffd400" opacity="0"/></g>
+        </g>
+        <text class="lub" id="lub1" x="470" y="200">lub</text><text class="lub" id="lub2" x="480" y="236">dub!</text>
+      </svg>
+      <p class="hint">The picture shows the heart as if you are facing someone, so their right side is on your left. Tap a room to learn about it.</p>
+    </div>
+    <div>
+      <div class="labBtns">
+        <button class="mini p" id="fPlay" type="button">Play the journey</button>
+        <button class="mini" id="beatBtn" type="button">Make it beat</button>
+      </div>
+      <div class="cards" id="cards"></div>
+      <div class="facts">
+        <div class="fact"><b>Your fist</b><span>roughly the size of your heart</span></div>
+        <div class="fact"><b>100,000</b><span>beats every day</span></div>
+        <div class="fact"><b>~5 litres</b><span>of blood pumped every minute</span></div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section class="band risk deco" id="risk"><svg class="bgart " aria-hidden="true" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice"><use href="#sRun" x="960" y="-10" width="300" height="300" class="drift"/><use href="#sLeaf" x="-20" y="380" width="260" height="260" class="drift2"/><use href="#sHeart" x="600" y="540" width="170" height="170" class="drift"/><use href="#sEcg" x="200" y="0" width="500" height="500"/></svg><div class="wrap">
+  <h2>Heart-health check: prevention starts today</h2>
+  <p class="lede">High blood pressure, smoking and inactivity damage the endothelium, the thin living lining of your arteries, years before a heart attack. Move the sliders to see which habits matter most for you.</p>
+  <div class="riskGrid">
+    <div class="form">
+      <div class="f"><label for="rAge">Age <output id="oAge">30</output></label><input type="range" id="rAge" min="18" max="85" value="30"></div>
+      <div class="f"><label for="rBp">Top BP number (systolic) <output id="oBp">125 mmHg</output></label><input type="range" id="rBp" min="90" max="190" value="125"></div>
+      <div class="f"><label for="rAct">Exercise per week <output id="oAct">60 min</output></label><input type="range" id="rAct" min="0" max="400" step="10" value="60"></div>
+      <div class="f"><label for="rSleep">Sleep per night <output id="oSleep">6.5 h</output></label><input type="range" id="rSleep" min="3" max="10" step="0.5" value="6.5"></div>
+      <div class="f"><label>Do any of these apply?</label>
+        <div class="tg" id="toggles">
+          <button type="button" data-k="smoke" aria-pressed="false">Smoke or vape</button>
+          <button type="button" data-k="diab" aria-pressed="false">Diabetes</button>
+          <button type="button" data-k="fam" aria-pressed="false">Heart disease in parents</button>
+          <button type="button" data-k="salt" aria-pressed="false">Salty or fried food most days</button>
+          <button type="button" data-k="stress" aria-pressed="false">High stress</button>
+        </div>
+      </div>
+    </div>
+    <div class="result" aria-live="polite">
+      <small style="color:#7fa391">Your habit score (lower is better)</small>
+      <div class="rScore" id="rScore">0</div>
+      <div class="rBar"><i id="rPin" style="left:0"></i></div>
+      <div id="rBand" style="font:600 20px Archivo,sans-serif"></div>
+      <ul class="tips" id="rTips"></ul>
+      <button class="mini p" id="rAsk" type="button" style="justify-self:start">Ask Pulse for a plan</button>
+      <p class="note">This is a learning tool, not a medical test. Only a doctor can assess your real risk.</p>
+    </div>
+  </div>
+</div></section>
+
+<footer class="band deco"><svg class="bgart lt" aria-hidden="true" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice"><use href="#sEcg" x="0" y="200" width="1200" height="1200"/></svg><div class="wrap">
+  <div><b style="color:#fff;font-family:Archivo">PulseGuard</b> · A first-response trainer built from Module 2: Cardiovascular System.</div>
+  <div>Practising here does not replace a certified CPR course. In an emergency, call 112.</div>
+</div></footer>
+
+<button class="fab" id="fab" type="button" aria-expanded="false" aria-controls="chat"><span class="av"><svg viewBox="0 0 32 32"><path d="M16 28S3 20 3 11a6.5 6.5 0 0 1 13-1 6.5 6.5 0 0 1 13 1c0 9-13 17-13 17z" fill="#c8102e"/></svg></span><span class="t">Ask Pulse</span></button>
+<div class="chat" id="chat" role="dialog" aria-label="Pulse AI coach">
+  <div class="chHead"><div><b>Pulse</b><small id="aiState">AI first-aid coach</small></div><button id="chClose" type="button" aria-label="Close chat">×</button></div>
+  <div class="msgs" id="msgs"></div>
+  <div class="chips" id="chips"></div>
+  <form class="chForm" id="chForm"><input id="chIn" placeholder="Ask about symptoms, CPR, the heart…" autocomplete="off" aria-label="Message Pulse"><button type="submit">Send</button></form>
+</div>
+
+<script>
+{
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=s=>{const lines=esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').split('\n');let out='',inL=false;for(const l of lines){const m=l.match(/^\s*(?:[-•*]|\d+\.)\s+(.*)/);if(m){if(!inL){out+='<ul>';inL=true}out+='<li>'+m[1]+'</li>'}else{if(inL){out+='</ul>';inL=false}if(l.trim())out+='<p style="margin:4px 0">'+l+'</p>'}}if(inL)out+='</ul>';return out};
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- hero ECG ---------- */
+const cv=$('#ecg'),cx=cv.getContext('2d');let ecgX=0,last=performance.now(),bpm=72,litres=0;
+const beat=t=>{const p=t%1;const g=(c,w,h)=>h*Math.exp(-((p-c)**2)/(2*w*w));return g(.18,.025,.12)-g(.30,.008,.12)+g(.32,.01,1)-g(.345,.01,.25)+g(.55,.045,.25)};
+const size=()=>{const r=cv.getBoundingClientRect(),d=devicePixelRatio||1;cv.width=r.width*d;cv.height=r.height*d;cx.setTransform(d,0,0,d,0,0);cx.fillStyle='#0c1210';cx.fillRect(0,0,r.width,r.height);ecgX=0};
+const roE=new ResizeObserver(size);roE.observe(cv);
+let prevY=null,phase=0;
+const drawEcg=now=>{const dt=Math.min(.05,(now-last)/1000);last=now;const W=cv.clientWidth,H=cv.clientHeight;if(!W){requestAnimationFrame(drawEcg);return}
+  const speed=Math.max(160,W/4);const steps=Math.max(1,Math.round(speed*dt));
+  for(let i=0;i<steps;i++){phase+=(bpm/60)/speed;const y=H*.62-beat(phase)*H*.48;
+    cx.fillStyle='#0c1210';cx.fillRect(ecgX,0,14,H);
+    cx.strokeStyle='#14201b';cx.lineWidth=1;if(Math.round(ecgX)%40===0){cx.beginPath();cx.moveTo(ecgX,0);cx.lineTo(ecgX,H);cx.stroke()}
+    if(prevY!==null&&ecgX>0){cx.strokeStyle='#2ee68a';cx.lineWidth=2.4;cx.shadowColor='#2ee68a';cx.shadowBlur=8;cx.beginPath();cx.moveTo(ecgX-1,prevY);cx.lineTo(ecgX,y);cx.stroke();cx.shadowBlur=0}
+    prevY=y;ecgX++;if(ecgX>W){ecgX=0;prevY=null}}
+  litres+=dt*5/60;$('#litres').textContent=litres.toFixed(1)+' L';
+  requestAnimationFrame(drawEcg)};
+if(!reduce)requestAnimationFrame(drawEcg);else{$('#litres').textContent='5 L/min'}
+setInterval(()=>{bpm=68+Math.round(Math.random()*8);$('#hr').textContent=bpm},2500);
+
+/* ---------- scenarios ---------- */
+const ICON={
+ gym:'<svg viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="#c8102e"/><rect x="10" y="28" width="44" height="8" rx="3" fill="#fff"/><rect x="8" y="20" width="8" height="24" rx="3" fill="#fff"/><rect x="48" y="20" width="8" height="24" rx="3" fill="#fff"/></svg>',
+ grand:'<svg viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="#2f6fde"/><circle cx="32" cy="24" r="10" fill="#fff"/><path d="M14 54c2-12 10-18 18-18s16 6 18 18z" fill="#fff"/><path d="M26 42l6 5 6-5" stroke="#c8102e" stroke-width="3" fill="none"/></svg>',
+ mom:'<svg viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="#8a3ffc"/><circle cx="32" cy="24" r="10" fill="#fff"/><path d="M22 18c2-8 18-8 20 0" stroke="#fff" stroke-width="5" fill="none"/><path d="M14 54c2-12 10-18 18-18s16 6 18 18z" fill="#fff"/></svg>',
+ desk:'<svg viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="#0e8a5a"/><rect x="12" y="16" width="40" height="26" rx="3" fill="#fff"/><path d="M16 32h8l3-6 4 10 3-6h14" stroke="#0e8a5a" stroke-width="2.5" fill="none"/><rect x="26" y="44" width="12" height="4" fill="#fff"/><rect x="18" y="48" width="28" height="4" rx="2" fill="#fff"/></svg>'};
+const S=[
+{id:'gym',tag:'Cardiac arrest',title:'Collapse at the gym',sub:'Your friend drops mid-workout.',meter:'Chance of survival',start:100,nodes:[
+ {t:'Your friend Arjun, 24, collapses during a set of squats. He is on the floor and not moving. Music is still blasting.',c:[
+  {x:'Tap his shoulders hard and shout "Arjun, are you okay?"',q:'good',s:10,d:-1,f:'Right. First check if he responds. It takes seconds and tells you whether this is a fainting spell or a cardiac arrest.'},
+  {x:'Splash water on his face and wait for him to wake up',q:'bad',s:60,d:-10,f:'If his heart has stopped, waiting wastes the most important minute. Without CPR, survival drops about 7–10% every minute.'},
+  {x:'Message the group chat asking what to do',q:'bad',s:90,d:-14,f:'Don\'t type, act. Shout for help from people in the room instead.'}]},
+ {t:'He doesn\'t respond. Every few seconds he makes a strange, noisy gasp. His lips are turning grey.',c:[
+  {x:'He\'s gasping, so he\'s breathing. Roll him on his side and wait',q:'bad',s:120,d:-18,f:'Those gasps are called agonal breathing. They are a sign of cardiac arrest, not normal breathing. Treat it as an arrest and start CPR.'},
+  {x:'Point at someone: "You, call 112! You, get the AED from reception!"',q:'good',s:10,d:-1,f:'Perfect. Giving named people specific jobs beats a vague "someone help". Now the call and the AED are both on the way.'},
+  {x:'Run to reception yourself to call',q:'meh',s:75,d:-11,f:'The call matters, but leaving him alone means no CPR. Get someone else to call while you stay with him.'}]},
+ {t:'The call is connected on speaker. The dispatcher says help is about 9 minutes away. What now?',c:[
+  {x:'Start compressions: heel of the hand on the centre of the chest, push 5–6 cm deep, 100–120 a minute',q:'good',s:5,d:0,cpr:1,f:'Yes! Your hands are now his heart. Each compression squeezes the ventricles and pushes blood to the brain. Practise the rhythm in the CPR trainer below.'},
+  {x:'Give mouth-to-mouth breaths for a minute first',q:'meh',s:60,d:-9,cpr:1,f:'For untrained bystanders, hands-only CPR is recommended. Compressions come first. Rescue breaths can come later if you are trained.'},
+  {x:'Feel carefully for a pulse for a full minute',q:'bad',s:60,d:-10,cpr:1,f:'Even professionals take no more than 10 seconds to check. If he isn\'t breathing normally, start pushing.'}]},
+ {t:'You\'re 2 minutes into CPR and your arms are burning. A gym trainer runs up with the AED.',c:[
+  {x:'Switch it on and follow its voice. Keep pushing while the trainer sticks on the pads',q:'good',s:30,d:-1,f:'Great teamwork. An AED talks you through every step. Anyone can use one, and it will only shock if the heart rhythm needs it.'},
+  {x:'Stop CPR and read the instructions printed on the box',q:'bad',s:90,d:-8,f:'Every pause in compressions lets blood pressure to the brain fall. Turn it on, and the AED will talk you through it.'},
+  {x:'Leave the AED. It\'s only for doctors',q:'bad',s:240,d:-20,f:'AEDs are built for the public. The heart is often quivering in ventricular fibrillation, and only a shock can reset it so the SA node can take over again.'}]},
+ {t:'AED: "Shock advised. Stand clear. Press the flashing button."',c:[
+  {x:'Shout "Everyone clear!", check nobody is touching him, press the button, then restart CPR straight away',q:'good',s:15,d:0,f:'Textbook. The shock stops the chaotic electrical activity so the heart\'s natural pacemaker can restart a normal beat. Going straight back to CPR keeps the blood moving.'},
+  {x:'Hold his hand to comfort him while you press shock',q:'bad',s:30,d:-6,f:'Anyone touching him can get shocked and can interfere with the analysis. Always clear first.'},
+  {x:'Wait a minute to see if he improves on his own',q:'bad',s:60,d:-10,f:'Every second between the analysis and the shock lowers the chance it works. Shock when you\'re told to.'}]}
+]},
+{id:'grand',tag:'Heart attack',title:'Dadaji says it\'s "just gas"',sub:'Chest pressure after dinner.',meter:'Heart muscle saved',start:100,nodes:[
+ {t:'Your grandfather, 67, has felt heavy pressure in his chest for 10 minutes. It spreads to his left arm, and he is sweating. "It\'s just gas," he says, "I\'ll have an antacid."',c:[
+  {x:'Give the antacid and let him lie down',q:'bad',s:900,d:-25,f:'Chest pressure that spreads to the arm, with sweating, is a classic heart-attack warning. A coronary artery may be blocked, and heart muscle starts dying within minutes. "Time is muscle."'},
+  {x:'Call 108 right away, even if he says it\'s nothing',q:'good',s:30,d:-2,f:'Correct. Paramedics can do an ECG on the way and alert the hospital so the blocked artery is opened faster.'},
+  {x:'Put him in the car and drive him yourself',q:'meh',s:300,d:-10,f:'Only if no ambulance can come. In the car nobody can treat him if his heart stops, and you might panic-drive. Call first.'}]},
+ {t:'The ambulance is 12 minutes away. Dadaji gets up and wants to walk around "to ease it".',c:[
+  {x:'Gently sit him down in a comfortable position, loosen tight clothing, and keep him calm',q:'good',s:20,d:-1,f:'Good. Walking raises the heart\'s need for oxygen. Resting lowers how hard the damaged pump has to work.'},
+  {x:'Let him walk. Moving might help',q:'bad',s:120,d:-12,f:'Activity raises heart rate and oxygen demand on muscle that is already starved of blood.'},
+  {x:'Make him climb the stairs to wait downstairs',q:'bad',s:180,d:-15,f:'Stairs are hard work for a heart that is already struggling. Have the paramedics come up to you.'}]},
+ {t:'The 108 dispatcher asks: "Does he have aspirin? Is he allergic, or does he have a bleeding problem?" He isn\'t allergic.',c:[
+  {x:'Give him one aspirin to chew, exactly as the dispatcher tells you',q:'good',s:30,d:0,f:'Aspirin makes platelets less sticky, which can slow the clot growing in the coronary artery. Give it only when a dispatcher or doctor advises it.'},
+  {x:'Give him a sleeping pill so he relaxes',q:'bad',s:60,d:-8,f:'Sedatives can hide worsening symptoms and slow his breathing. Never give random medicines.'},
+  {x:'Give him a big glass of water and a heavy meal',q:'bad',s:60,d:-6,f:'Digestion makes the heart work harder, and food in the stomach complicates emergency care.'}]},
+ {t:'Suddenly his eyes roll back. He slumps and stops breathing normally.',c:[
+  {x:'Lay him flat on the floor, tell the dispatcher, and start chest compressions',q:'good',s:10,d:-2,cpr:1,f:'Exactly. The heart attack has turned into a cardiac arrest. CPR keeps blood going to his brain until the paramedics arrive.'},
+  {x:'Shake him and keep calling his name for a few minutes',q:'bad',s:180,d:-25,f:'Unresponsive and not breathing normally means CPR, now.'},
+  {x:'Give him water to revive him',q:'bad',s:60,d:-15,f:'Never pour liquid into an unresponsive person\'s mouth. It can block the airway.'}]}
+]},
+{id:'mom',tag:'Silent symptoms',title:'Mom\'s "acidity"',sub:'Women\'s warning signs are often missed.',meter:'Heart muscle saved',start:100,nodes:[
+ {t:'Your mother, 52, has diabetes. For two days she has felt very tired and a bit sick. Tonight her jaw and upper back hurt, and she feels breathless. She says it\'s acidity and goes to bed.',c:[
+  {x:'Agree. It sounds like acidity, she\'ll be fine after sleep',q:'bad',s:1800,d:-35,f:'Women, older adults and people with diabetes often don\'t get the classic crushing chest pain. Jaw or back pain, nausea, unusual tiredness and breathlessness can all be heart attack signs.'},
+  {x:'Recognise these as possible heart attack signs and call 112',q:'good',s:30,d:-2,f:'Well spotted. Diabetes can damage nerves, so the pain signal may be dull or missing. That\'s why "silent" heart attacks happen.'},
+  {x:'Search her symptoms online for 20 minutes',q:'bad',s:1200,d:-22,f:'Online searches give mixed answers and waste time. When in doubt, call. Paramedics would rather check a false alarm.'}]},
+ {t:'She refuses: "Don\'t make a fuss, I don\'t want an ambulance at the door."',c:[
+  {x:'Respect her wish and check on her in the morning',q:'bad',s:2400,d:-30,f:'If an artery is blocked, waiting until morning could mean permanent damage to her heart muscle.'},
+  {x:'Calmly explain: "If it\'s your heart, every minute matters. Let\'s let them check." Then call anyway',q:'good',s:60,d:-3,f:'Kind but firm. Denial is one of the main reasons people reach hospital late.'},
+  {x:'Shout at her until she agrees',q:'meh',s:180,d:-6,f:'Panic and anger raise her stress hormones and heart rate. A calm voice works better.'}]},
+ {t:'At the emergency room, the doctor asks what happened.',c:[
+  {x:'Tell them all her symptoms over two days, that she has diabetes, and the medicines she takes',q:'good',s:30,d:0,f:'This helps the team quickly order an ECG and a blood test called troponin, which shows heart muscle damage.'},
+  {x:'Just say "she has acidity"',q:'bad',s:600,d:-15,f:'Underplaying symptoms can send doctors down the wrong path. Describe everything.'},
+  {x:'Say nothing and wait to be asked',q:'meh',s:300,d:-6,f:'ERs are busy. Speak up clearly about chest, jaw, back or breathing symptoms.'}]}
+]},
+{id:'desk',tag:'Prevention',title:'The 12-hour desk job',sub:'Young, busy, and BP is creeping up.',meter:'Long-term heart health',start:60,clock:false,nodes:[
+ {t:'You\'re 28 and work 12-hour days. At an office health camp your BP reads 148/96. "You\'re too young for heart problems," a colleague jokes.',c:[
+  {x:'Laugh it off. Heart trouble is for old people',q:'bad',d:-15,f:'High BP has no symptoms. That\'s why it\'s called the "silent killer". It keeps pushing hard on artery walls and damages the endothelium for years.'},
+  {x:'Recheck on different days, and see a doctor if it stays above 130/80',q:'good',d:15,f:'Smart. One reading isn\'t a diagnosis, but a pattern is. Catching it early can prevent a lot of damage.'},
+  {x:'Drink more coffee and energy drinks to get through the stress',q:'bad',d:-12,f:'Too much caffeine and stimulant drinks can raise BP and heart rate further.'}]},
+ {t:'Lunch break. The canteen offers:',c:[
+  {x:'Dal, sabzi, salad, roti, with less salt',q:'good',d:12,f:'Less salt helps lower blood volume and pressure. Fibre and vegetables support healthy cholesterol.'},
+  {x:'Samosas, chips and a cola, every day',q:'bad',d:-12,f:'Lots of salt, trans fat and sugar. Over time LDL builds up into plaque, which narrows the "pipes" and raises resistance.'},
+  {x:'Skip lunch and snack on biscuits at your desk',q:'meh',d:-4,f:'Skipping meals often leads to sugar crashes and overeating later. Plan simple, balanced meals instead.'}]},
+ {t:'You\'ve been sitting for 4 hours straight.',c:[
+  {x:'Set an hourly reminder to walk for 3–5 minutes, and take the stairs',q:'good',d:12,f:'Movement makes blood vessels widen and keeps the endothelium healthy. Aim for at least 150 minutes of activity a week.'},
+  {x:'Keep going. Breaks hurt productivity',q:'bad',d:-8,f:'Long periods of sitting are linked to higher heart risk, even in people who exercise.'},
+  {x:'Smoke a cigarette to relax',q:'bad',d:-20,f:'Smoking damages the vessel lining, narrows arteries and makes blood more likely to clot. Quitting is the biggest single win.'}]},
+ {t:'It\'s 1 a.m. and you\'re scrolling. Alarm at 6:30.',c:[
+  {x:'Put the phone away and aim for 7–8 hours of sleep',q:'good',d:10,f:'During deep sleep your heart rate and blood pressure drop, giving your heart and vessels time to recover.'},
+  {x:'One more episode. Sleep is for the weekend',q:'bad',d:-10,f:'Regular short sleep is linked to high BP and heart disease. You can\'t fully "catch up" at weekends.'},
+  {x:'Take a sleeping pill every night without a doctor',q:'meh',d:-4,f:'Fix your habits first (screens off, regular times). See a doctor for ongoing insomnia.'}]}
+]}];
+const done={};let cur=null,ni=0,clock=0,meter=100,hist=[],cprOn=false;
+const renderPicks=()=>{$('#picks').innerHTML=S.map(s=>`<button class="pick" type="button" data-id="${s.id}" aria-pressed="${cur&&cur.id===s.id}"><span class="tag">${s.tag}</span><b>${s.title}</b><span>${s.sub}</span>${done[s.id]!=null?`<span class="done">Best: ${done[s.id]}%</span>`:''}</button>`).join('')};
+const mm=s=>Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+const setSide=()=>{$('#clock').textContent=cur&&cur.clock===false?'—':mm(clock);const v=Math.max(0,Math.min(100,Math.round(meter)));$('#mVal').textContent=v+'%';const b=$('#mBar');b.style.width=v+'%';b.style.background=v>65?'#2ee68a':v>35?'#f2a23a':'#ff3b55';$('#mVal').style.color=b.style.background;
+ $('#hist').innerHTML=hist.length?hist.map(h=>`<div><span class="dot" style="background:${h.q==='good'?'#2ee68a':h.q==='meh'?'#f2a23a':'#ff3b55'}"></span><span>${esc(h.x)}</span></div>`).join(''):'<div style="color:#7fa391">No decisions yet.</div>'};
+const start=id=>{cur=S.find(s=>s.id===id);ni=0;clock=0;meter=cur.start;hist=[];cprOn=false;$('#mLabel').textContent=cur.meter;renderPicks();renderNode()};
+const renderNode=()=>{const n=cur.nodes[ni];setSide();
+ $('#play').innerHTML=`<div class="stepn">${esc(cur.title)} · step ${ni+1} of ${cur.nodes.length}</div><div class="scene">${ICON[cur.id]}<p>${esc(n.t)}</p></div><div class="choices">${n.c.map((c,i)=>`<button class="choice" type="button" data-i="${i}"><span class="k">${'ABC'[i]}</span><span>${esc(c.x)}</span></button>`).join('')}</div><div class="fb" id="fb"></div>`};
+const choose=i=>{const n=cur.nodes[ni],c=n.c[i];
+ document.querySelectorAll('.choice').forEach((b,j)=>{b.disabled=true;if(j===i)b.classList.add(c.q)});
+ const s=c.s||0;if(c.cpr)cprOn=true;clock+=s;meter+=c.d;if(cur.id==='gym'&&!cprOn)meter-=0;hist.push(c);setSide();
+ const head=c.q==='good'?'Good call':c.q==='meh'?'Not the best move':'Risky choice';
+ const best=n.c.find(o=>o.q==='good');
+ const fb=$('#fb');fb.innerHTML=`<b style="color:${c.q==='good'?'#1c9a5c':c.q==='meh'?'#b26b00':'var(--red)'}">${head}${s?` · +${s<60?s+'s':Math.round(s/60)+' min'}`:''}</b>${esc(c.f)}${c.q!=='good'?`<p style="margin-top:8px"><b style="display:inline">Better:</b> ${esc(best.x)}</p>`:''}<div class="fbBtns"><button class="mini p" type="button" id="nx">${ni<cur.nodes.length-1?'Next':'See result'}</button><button class="mini" type="button" id="why">Ask Pulse why</button></div>`;
+ fb.classList.add('show');$('#nx').focus({preventScroll:true});
+ $('#nx').onclick=()=>{ni++;ni<cur.nodes.length?renderNode():finish()};
+ $('#why').onclick=()=>ask(`In the "${cur.title}" scenario: "${n.t}" I chose "${c.x}". Explain why the best action is "${best.x}", in simple words, and link it to how the heart works.`)};
+const finish=()=>{const v=Math.max(0,Math.min(100,Math.round(meter)));done[cur.id]=Math.max(done[cur.id]||0,v);renderPicks();
+ const good=hist.filter(h=>h.q==='good').length;
+ const msg=v>=80?'Outstanding. You acted like a trained first responder.':v>=55?'Solid effort. A few delays cost precious time.':'Too many delays. Try again; practice makes it automatic.';
+ $('#play').innerHTML=`<div class="end"><div class="stepn">${esc(cur.title)} · result</div><h3>${esc(cur.meter)}: ${v}%</h3><p>${msg}</p><p>${good} of ${hist.length} best choices${cur.clock===false?'':` · total time ${mm(clock)}`}.</p><div class="fbBtns"><button class="mini p" type="button" id="again">Try again</button><button class="mini" type="button" id="nextS">Next scenario</button><button class="mini" type="button" id="debrief">Get an AI debrief</button></div></div>`;
+ $('#again').onclick=()=>start(cur.id);
+ $('#nextS').onclick=()=>{const k=(S.indexOf(cur)+1)%S.length;start(S[k].id)};
+ $('#debrief').onclick=()=>ask(`Debrief me on the "${cur.title}" scenario. My choices were: ${hist.map(h=>`"${h.x}" (${h.q})`).join('; ')}. Final ${cur.meter}: ${v}%. Give 3 short lessons to remember.`)};
+$('#picks').addEventListener('click',e=>{const b=e.target.closest('.pick');if(b)start(b.dataset.id)});
+$('#play').addEventListener('click',e=>{const b=e.target.closest('.choice');if(b&&!b.disabled)choose(+b.dataset.i)});
+renderPicks();start('gym');
+
+/* ---------- CPR trainer ---------- */
+let taps=[],count=0,goodN=0,t0=0,actx=null,metroT=null,timerT=null;
+const chest=$('#chest');
+const click=(f=880,d=.05,g=.15)=>{try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();const o=actx.createOscillator(),v=actx.createGain();o.frequency.value=f;v.gain.value=g;o.connect(v);v.connect(actx.destination);o.start();v.gain.exponentialRampToValueAtTime(.0001,actx.currentTime+d);o.stop(actx.currentTime+d)}catch(e){}};
+const press=()=>{const now=performance.now();if(!t0){t0=now;timerT=setInterval(()=>{$('#cTime').textContent=Math.round((performance.now()-t0)/1000)+'s'},500)}
+ chest.classList.add('down');setTimeout(()=>chest.classList.remove('down'),90);click(220,.06,.2);
+ taps.push(now);if(taps.length>7)taps.shift();count++;
+ let r=null;if(taps.length>=3){const iv=[];for(let i=1;i<taps.length;i++)iv.push(taps[i]-taps[i-1]);const avg=iv.reduce((a,b)=>a+b)/iv.length;r=Math.round(60000/avg)}
+ if(r){if(r>=100&&r<=120)goodN++;$('#bpm').textContent=r;const x=Math.max(0,Math.min(460,(r-60)/100*460));$('#needle').setAttribute('transform',`translate(${x},16)`);
+  $('#bpm').style.color=r>=100&&r<=120?'#2ee68a':'#f2a23a';
+  $('#cprTip').textContent=r<100?'A little faster. Think of the beat of "Stayin\' Alive".':r>120?'Slow down slightly. The heart needs time to refill between pushes (like diastole).':'Perfect rhythm! Keep it steady and let the chest fully rise between pushes.'}
+ $('#cCount').textContent=count;$('#cGood').textContent=count>2?Math.round(goodN/(count-2)*100)+'%':'0%';
+ if(count>0&&count%30===0)$('#cprTip').textContent=`${count} compressions! In real life, keep going without stopping until help or an AED arrives. Swap with someone every 2 minutes if you can.`};
+chest.addEventListener('pointerdown',e=>{e.preventDefault();press()});
+chest.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!e.repeat)press()}});
+document.addEventListener('keydown',e=>{if(e.key===' '&&!e.repeat&&e.target===document.body){const r=$('#cpr').getBoundingClientRect();if(r.top<innerHeight&&r.bottom>0){e.preventDefault();press()}}});
+$('#metro').addEventListener('click',e=>{const on=e.currentTarget.getAttribute('aria-pressed')!=='true';e.currentTarget.setAttribute('aria-pressed',on);clearInterval(metroT);if(on){click(1200,.03,.08);metroT=setInterval(()=>click(1200,.03,.08),60000/110)}});
+$('#cReset').addEventListener('click',()=>{taps=[];count=0;goodN=0;t0=0;clearInterval(timerT);$('#bpm').textContent='—';$('#bpm').style.color='';$('#cCount').textContent='0';$('#cGood').textContent='0%';$('#cTime').textContent='0s';$('#needle').setAttribute('transform','translate(230,16)');$('#cprTip').textContent='Reset. Tap the chest to begin again.'});
+
+/* ---------- heart lab (simple) ---------- */
+const STEPS=[
+ {c:'#2f6fde',h:'Tired blood comes home',p:'Blood that has given its oxygen to the body comes back into the right top room.',on:['z-body','pB','r-ra']},
+ {c:'#2f6fde',h:'Right side pumps it to the lungs',p:'A one-way door (valve) opens, and the right bottom room squeezes the blood up to the lungs.',on:['r-rv','pB','z-valves','z-lungs']},
+ {c:'#e8394f',h:'Lungs refill it with oxygen',p:'In the lungs the blood drops off carbon dioxide (which you breathe out) and picks up fresh oxygen. Now it is red and fresh.',on:['z-lungs','pR','r-la']},
+ {c:'#c8102e',h:'Left side pumps it to the body',p:'The left bottom room is the strongest. It squeezes fresh blood out to the whole body, and the loop starts again.',on:['r-lv','pR','z-valves','z-body']},
+ {c:'#d9a400',h:'The spark keeps the beat',p:'A tiny natural "spark plug" (the SA node) fires about once a second and tells the rooms when to squeeze. If this rhythm turns to chaos, the heart stops pumping, and that is when CPR and an AED save lives.',on:['z-spark','r-ra','r-la','r-rv','r-lv']}];
+const ROOM={'r-ra':['Right top room (right atrium)','Collects tired, low-oxygen blood coming back from the body.'],'r-rv':['Right bottom room (right ventricle)','Pumps that blood a short distance to the lungs.'],'r-la':['Left top room (left atrium)','Collects fresh, oxygen-rich blood coming back from the lungs.'],'r-lv':['Left bottom room (left ventricle)','The strongest room. It has thick muscle because it pumps blood to your whole body, head to toe.']};
+const ALL=['r-ra','r-rv','r-la','r-lv','z-lungs','z-body','pB','pR','z-valves','z-spark'];
+$('#cards').innerHTML=STEPS.map((x,i)=>`<button class="sc" type="button" data-i="${i}"><span class="n" style="background:${x.c}">${i+1}</span><span><b>${x.h}</b>${x.p}</span></button>`).join('');
+const light=on=>ALL.forEach(id=>{const e=$('#'+id);if(e)e.classList.toggle('dim',!!on&&!on.includes(id))});
+let si=-1,playT=null;
+const show=i=>{si=i;light(STEPS[i].on);document.querySelectorAll('.sc').forEach((b,j)=>b.classList.toggle('on',j===i));if(i===4||i===1||i===3)beatOnce(i===4)};
+const stopPlay=()=>{clearInterval(playT);playT=null;$('#fPlay').textContent='Play the journey'};
+$('#cards').addEventListener('click',e=>{const b=e.target.closest('.sc[data-i]');if(!b)return;stopPlay();const i=+b.dataset.i;if(si===i){si=-1;light(null);b.classList.remove('on')}else show(i)});
+$('#fPlay').addEventListener('click',()=>{if(playT){stopPlay();light(null);return}$('#fPlay').textContent='Stop';show(0);playT=setInterval(()=>{if(si>=STEPS.length-1){stopPlay();setTimeout(()=>{light(null);document.querySelectorAll('.sc').forEach(b=>b.classList.remove('on'));si=-1},2200);return}show(si+1)},2600)});
+const beatOnce=spark=>{const h=$('#bigHeart');h.classList.remove('squeeze');void h.getBBox();h.classList.add('squeeze');
+ ['#lub1','#lub2'].forEach((q,k)=>{const t=$(q);t.classList.remove('show');setTimeout(()=>{t.classList.add('show')},k*180)});
+ click(90,.12,.25);setTimeout(()=>click(70,.1,.2),180);
+ if(spark&&!reduce){const sp=$('#spark');sp.setAttribute('opacity','1');sp.animate([{r:7,opacity:1},{r:40,opacity:0}],{duration:700})}};
+$('#beatBtn').addEventListener('click',()=>beatOnce(true));
+$('#heartSvg').addEventListener('click',e=>{const r=e.target.closest('.room');if(!r||!ROOM[r.id])return;stopPlay();const [t,d]=ROOM[r.id];light([r.id]);document.querySelectorAll('.sc').forEach(b=>b.classList.remove('on'));si=-1;
+ const c=document.getElementById('cards');let tip=document.getElementById('roomTip');if(!tip){tip=document.createElement('div');tip.id='roomTip';tip.className='sc on';c.prepend(tip)}tip.innerHTML=`<span class="n" style="background:var(--red)">i</span><span><b>${esc(t)}</b>${esc(d)}</span>`});
+/* moving blood dots */
+{const g=$('#dots');let html='';for(const [p,col] of [['pB','#2f6fde'],['pR','#c8102e']])for(let k=0;k<5;k++)html+=`<circle r="7" fill="${col}" stroke="#fff" stroke-width="2"><animateMotion dur="5s" repeatCount="indefinite" begin="${-k}s"><mpath href="#${p}"/></animateMotion></circle>`;if(!reduce)g.innerHTML=html}
+setInterval(()=>{if(!reduce&&!document.hidden){const h=$('#bigHeart');h.classList.remove('squeeze');void h.getBBox();h.classList.add('squeeze')}},1600);
+
+/* ---------- risk check ---------- */
+const tg={smoke:false,diab:false,fam:false,salt:false,stress:false};
+const calcRisk=()=>{const age=+$('#rAge').value,bp=+$('#rBp').value,act=+$('#rAct').value,sl=+$('#rSleep').value;
+ $('#oAge').textContent=age;$('#oBp').textContent=bp+' mmHg';$('#oAct').textContent=act+' min';$('#oSleep').textContent=sl+' h';
+ const f=[];
+ f.push(['age',Math.max(0,(age-30)*0.6),'Age is a factor you can\'t change, so the habits you can change matter even more.']);
+ f.push(['bp',bp<120?0:bp<130?4:bp<140?10:bp<160?18:26,bp>=130?'Your BP is above 130. Check it on different days, cut salt, and see a doctor. High BP strains the endothelium on every beat.':'Your BP is in a healthy range. Keep checking it once a year.']);
+ f.push(['act',act>=150?0:act>=75?6:12,'Build up to 150 minutes a week of brisk walking, cycling or sport. Movement makes vessels widen and keeps them flexible.']);
+ f.push(['sleep',sl>=7&&sl<=9?0:sl<6?8:4,'Aim for 7–8 hours. BP drops during deep sleep, giving your vessels time to recover.']);
+ if(tg.smoke)f.push(['smoke',20,'Quit smoking or vaping. It is the biggest single change you can make for your heart. Ask about free quit-lines and support.']);
+ if(tg.diab)f.push(['diab',14,'Keep blood sugar in your target range and get regular check-ups. Diabetes speeds up artery damage and can hide heart attack pain.']);
+ if(tg.fam)f.push(['fam',8,'With heart disease in your family, start yearly checks of BP, cholesterol and sugar early.']);
+ if(tg.salt)f.push(['salt',8,'Cut back on salt and fried snacks. Choose dal, vegetables and whole grains. Less salt means lower blood volume and pressure.']);
+ if(tg.stress)f.push(['stress',6,'Manage stress with breaks, breathing exercises and time outdoors. Stress hormones raise heart rate and BP.']);
+ const score=Math.min(100,Math.round(f.reduce((a,b)=>a+b[1],0)));
+ $('#rScore').textContent=score;$('#rPin').style.left=`calc(${score}% - 2px)`;
+ const band=score<20?['Looking good: keep these habits','#2ee68a']:score<45?['Some warning signs to work on','#f2a23a']:['Several risks stacking up: talk to a doctor','#ff5a6e'];
+ $('#rBand').textContent=band[0];$('#rBand').style.color=band[1];$('#rScore').style.color=band[1];
+ const top=f.filter(x=>x[1]>0&&x[0]!=='age').sort((a,b)=>b[1]-a[1]).slice(0,3);
+ $('#rTips').innerHTML=(top.length?top:[['ok',0,'Great profile. Keep moving, sleeping well and eating simply, and get a check-up every year.']]).map(t=>`<li>${esc(t[2])}</li>`).join('');
+ return {age,bp,act,sl,score,flags:Object.keys(tg).filter(k=>tg[k])}};
+['#rAge','#rBp','#rAct','#rSleep'].forEach(s=>$(s).addEventListener('input',calcRisk));
+$('#toggles').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;tg[b.dataset.k]=!tg[b.dataset.k];b.setAttribute('aria-pressed',tg[b.dataset.k]);calcRisk()});
+calcRisk();
+$('#rAsk').addEventListener('click',()=>{const r=calcRisk();ask(`My heart-habit check: age ${r.age}, systolic BP ${r.bp}, ${r.act} min exercise/week, ${r.sl} h sleep, factors: ${r.flags.join(', ')||'none'}. Score ${r.score}/100. Give me a simple, realistic 4-week plan for an Indian lifestyle.`)});
+
+/* ---------- AI chat: Pulse ---------- */
+const SYS=`You are "Pulse", a warm, upbeat first-aid and heart-health coach on PulseGuard, a student-built educational website about the cardiovascular system (heart anatomy, blood flow, valves, conduction system SA node/AV node/Bundle of His/Purkinje fibres, systole/diastole, blood pressure, endothelium, hydraulic-machine analogies). The user is likely in India: emergency numbers are 112 (all emergencies) and 108 (ambulance).
+Rules: Answer in plain, simple English, under 140 words, using short bullet points when useful and **bold** for key actions. If the user describes symptoms happening now (chest pain or pressure, fainting, collapse, breathlessness, jaw/arm pain, someone not breathing), FIRST tell them to call 112/108 immediately and give the key steps (hands-only CPR 100–120/min, 5–6 cm deep, use an AED). Never diagnose or prescribe; for medicines say to follow the dispatcher or a doctor. Link answers to how the heart works when it helps. Be encouraging. You are not a doctor; say so briefly only when giving health advice.`;
+const FALL=[
+ [/cpr|compress|push/i,'**Hands-only CPR:**\n- Call 112 / 108 first, phone on speaker\n- Heel of your hand on the centre of the chest, other hand on top\n- Push **5–6 cm deep, 100–120 per minute**\n- Let the chest rise fully between pushes\n- Don\'t stop until help or an AED arrives\nTry the CPR trainer on this page!'],
+ [/aed|defib|shock/i,'An **AED** is a portable machine that checks the heart\'s rhythm and gives a shock if needed. Switch it on and follow its voice. It only shocks if the heart is in a rhythm like ventricular fibrillation, which lets the SA node take over again.'],
+ [/attack|chest|pain|symptom|jaw|arm/i,'**Heart attack warning signs:** chest pressure or pain, pain spreading to the arm, jaw, back or neck, sweating, breathlessness, nausea, unusual tiredness. Women and people with diabetes often have milder or "silent" signs.\n**Call 108 / 112 right away.** Don\'t drive yourself.'],
+ [/arrest|collapse|faint/i,'**Cardiac arrest** means the heart suddenly stops pumping. The person collapses, doesn\'t respond, and isn\'t breathing normally (they may gasp). **Call 112, start CPR, get an AED.** A heart attack is a blocked artery; it can lead to an arrest.'],
+ [/valve/i,'The heart has **4 one-way valves**: tricuspid, pulmonary, mitral and aortic. They work like check valves in a hydraulic machine, stopping blood from flowing backwards.'],
+ [/bp|pressure|hypertension/i,'Normal BP is about **120/80 mmHg**: systolic is when the ventricles squeeze, diastolic is when they relax. Readings above 130/80 again and again mean you should see a doctor. Less salt, more exercise, good sleep and not smoking all help.'],
+ [/sa node|conduct|electr|purkinje/i,'The **SA node** (pacemaker) fires → the atria contract → the signal reaches the **AV node** and pauses → it travels down the **Bundle of His** → **Purkinje fibres** → the ventricles contract. Try "Electrical system" in the Heart lab.']];
+const fallback=q=>{for(const [r,a] of FALL)if(r.test(q))return a;return 'I\'m in offline mode right now, but I can still help with **CPR, AEDs, heart attack signs, cardiac arrest, valves, blood pressure** or the **heart\'s electrical system**. Try asking about one of those! In an emergency, call **112**.'};
+const msgs=$('#msgs'),hist2=[];let busy=false,samplerP=null;
+const getSampler=()=>samplerP||(samplerP=(window.claude&&window.claude.use?window.claude.use('sample'):Promise.resolve(null)).catch(()=>null));
+const addMsg=(who,html)=>{const d=document.createElement('div');d.className='m '+who;d.innerHTML=html;msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;return d};
+addMsg('b',fmt('Hi, I\'m **Pulse**, your AI first-aid coach. Ask me anything about the heart, heart attack signs, or what to do in an emergency.\n**In a real emergency, call 112 / 108 first.**'));
+const CHIPS=['How do I do CPR?','Heart attack vs cardiac arrest?','Signs in women?','Why is the left ventricle thicker?','What is an AED?'];
+$('#chips').innerHTML=CHIPS.map(c=>`<button type="button">${esc(c)}</button>`).join('');
+$('#chips').addEventListener('click',e=>{const b=e.target.closest('button');if(b)send(b.textContent)});
+const openChat=()=>{$('#chat').classList.add('open');$('#fab').setAttribute('aria-expanded','true');setTimeout(()=>$('#chIn').focus(),50)};
+const ask=q=>{openChat();send(q)};
+$('#fab').addEventListener('click',()=>{const o=$('#chat').classList.toggle('open');$('#fab').setAttribute('aria-expanded',o);if(o)$('#chIn').focus()});
+$('#chClose').addEventListener('click',()=>{$('#chat').classList.remove('open');$('#fab').setAttribute('aria-expanded','false')});
+$('#heroAsk').addEventListener('click',openChat);
+async function send(q){q=q.trim();if(!q||busy)return;busy=true;addMsg('u',esc(q));hist2.push({role:'user',content:q});
+ const bub=addMsg('b','<span class="typing"><span></span><span></span><span></span></span>');
+ let answer='';
+ try{const sample=await getSampler();
+  if(!sample)throw {code:'none'};
+  $('#aiState').textContent='AI first-aid coach · thinking…';
+  const convo=[{role:'user',content:SYS+'\n\nReply "Ready." to confirm.'},{role:'assistant',content:'Ready.'},...hist2.slice(-10)];
+  const res=await sample(convo,{cache:false,modelTier:'quick',onText:({text})=>{if(text&&text!=='Thinking...'){answer=text;bub.innerHTML=fmt(text);msgs.scrollTop=msgs.scrollHeight}}});
+  answer=(res&&res.text)||answer;bub.innerHTML=fmt(answer);
+ }catch(err){answer=(err&&err.text)||fallback(q);bub.innerHTML=fmt(answer);if(err&&err.code==='rate_limited')bub.insertAdjacentHTML('beforeend','<p class="note">Pulse is busy. Wait a moment before asking again.</p>');}
+ $('#aiState').textContent='AI first-aid coach';hist2.push({role:'assistant',content:answer});busy=false;msgs.scrollTop=msgs.scrollHeight}
+$('#chForm').addEventListener('submit',e=>{e.preventDefault();const v=$('#chIn').value;$('#chIn').value='';send(v)});
+}
+</script>
+</body>
+</html>
